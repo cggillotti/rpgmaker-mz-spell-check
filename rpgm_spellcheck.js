@@ -80,7 +80,6 @@ fs.readdir(fileDir , function (err, files) {
 
         }
     });
-    console.log(colors.green("Complete. Found ")+colors.red(errorCount)+colors.green("possible issues"));
 
 });
 

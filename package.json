@@ -2,7 +2,7 @@
   "name": "rpgmakermz_talk_tool",
   "version": "1.0.0",
   "description": "A tool for viewing and spell checking RpgMaker MZ Talk actions",
-  "main": "rpgm_talk_dump.js",
+  "main": "rpgm_spellcheck.js",
   "dependencies": {
     "colors": "^1.4.0",
     "jsonexport": "^3.2.0",
@@ -10,7 +10,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node rpgm_spellcheck.js"
   },
   "author": "",
   "license": "ISC"
