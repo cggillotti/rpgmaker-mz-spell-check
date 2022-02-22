@@ -13,9 +13,12 @@ Or you can put your data files in the /datafiles directory and the script will c
 
 ## Options
 You can add the path to your datafiles as an argument
-You can use the -a flag to display all Talk strings found (not just the ones with spelling flags)
+You can use the **-a** flag to display all Talk strings found (not just the ones with spelling flags)
 e.g.
 node rpgm_spellcheck.js -a [PATH TO YOUR DATAFILES]
+
+if you're on windows with an ubuntu subsystem you may need to navigate to your files with /mnt/[DISK LETTER]
+node rpgm_spellcheck.js -a '/mnt/c/Users/USERNAME/Documents/Output/GAME NAME/data'
 
 ## Output
 After running the script the output is [File Name] [Talk String]
