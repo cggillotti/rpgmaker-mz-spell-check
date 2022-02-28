@@ -3,6 +3,8 @@
 ## Purpose
 This is a node js command line tool to quick pull out all of the Talk strings from a RPGMaker MZ data files (JSON format)
 It will write out the lines and run a spellchecker against the words found, and will highlight things that might be wrong.
+There is a file called ignore.json under /config so you can put in words to ignore for spellcheck (like names).
+
 
 ## Usage
 To get started
@@ -27,7 +29,14 @@ You can put your data files in the /datafiles directory and the script will chec
 - node rpgm_spellcheck.js -d /mnt/c/User/name/Documents/RMMZ/project/data
 
 ### Scan default /datasources, display all lines, and prompt to add common flagged words to ignored file
-- node rpgm_spellcheck.js -ia
+- node rpgm_spellcheck.js -a
+
+### Scan default /datasources and prompt to add common flagged words to ignored file
+- node rpgm_spellcheck.js -i
+
+This will prompt you after the scan is done to review any words that came up > 3 times. You can add them to the ignore list under config from here.
+
+<img width="505" alt="Ignore process" src="https://user-images.githubusercontent.com/7127233/156056366-a55ecb4d-f193-4af8-9d27-b9951235fc31.png">
 
 
 ## Notes
