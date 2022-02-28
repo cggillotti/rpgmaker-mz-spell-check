@@ -31,6 +31,12 @@ You can put your data files in the /datafiles directory and the script will chec
 ### Scan default /datasources, display all lines, and prompt to add common flagged words to ignored file
 - node rpgm_spellcheck.js -a
 
+### Scan default /datasources, but wait for input after each file's results (Paging mode)
+- node rpgm_spellcheck.js -p
+
+<img width="346" alt="pager" src="https://user-images.githubusercontent.com/7127233/156056695-65c20e65-478b-42dd-a980-4449ecb6bf5d.png">
+
+
 ### Scan default /datasources and prompt to add common flagged words to ignored file
 - node rpgm_spellcheck.js -i
 
