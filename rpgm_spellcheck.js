@@ -56,14 +56,13 @@ if(commandArgs.length && commandArgs[0] != "") {
     }
 }
 
-console.log(colors.green("Looking in "), fileDir);
-
+console.log(colors.green("Looking in "), fileDir)
 getIgnores();
 checkFiles();
 console.log("Total of "+errorCount+" words flagged");
 var flaggedTermsSorted = getFlaggedTermsArray(flaggedTerms);
 createReport(reportData, flaggedTermsSorted);
-addToIgnore(flaggedTermsSorted, ignoreTerms);
+addToIgnore(flaggedTermsSorted, ignoreTerms,ignores);
 
 
 function getIgnores() {
@@ -81,14 +80,15 @@ function getIgnores() {
             };
             fs.writeFileSync('configs/ignore.json',JSON.stringify(defaultIgnore));
             ignoreTerms = defaultIgnore;
+            ignores = {"ignoreList": ignoreTerms};
         }
     }
 }
 
-function addToIgnore(flaggedTermsSorted, ignoreTerms) {
-    var modifyIgnore = false;
-    
+function addToIgnore(flaggedTermsSorted, ignoreTerms, ignores) {
+    var modifyIgnore = false;   
     var doIgnore = prompt('Would you like to see the most flagged words? We can add them to your ignore list. y/n? ');
+
     if(doIgnore.match(/[Yy]/)) {
         console.log("Here are the top most flagged terms.");
         for(var i = 0; i < flaggedTermsSorted.length; i++)
@@ -109,8 +109,7 @@ function addToIgnore(flaggedTermsSorted, ignoreTerms) {
     }
 
     if(modifyIgnore) {
-        ignores.ignoreList = ignoreTerms;
-        fs.writeFileSync('configs/ignore.json',JSON.stringify(ignores),{'encoding':'utf-8'});
+        fs.writeFileSync('configs/ignore.json',JSON.stringify({"ignoreList":ignoreTerms}),{'encoding':'utf-8'});
         console.log(colors.green("Updated Ignore list."));
     }
 
