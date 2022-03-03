@@ -181,7 +181,7 @@ files.forEach(function (file) {
                                                 msg += wrd + " ";
                                             } 
                                         });
-                                        if(hasError) {
+                                        if(hasError || showAll) {
                                             if(fileColorToggle) {
                                                 console.log(colors.white(file.toString()) +" "+ msg);
                                             } else {
