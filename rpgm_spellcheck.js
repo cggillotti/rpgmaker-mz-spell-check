@@ -77,14 +77,9 @@ function getIgnores() {
         return ignoresJSON;
 
     } else {
-        var defaultIgnore = {
-            "ignoreList": [
-            ]
-        };
-        fs.writeFileSync('configs/ignore.json',JSON.stringify(defaultIgnore));
-        ignoreTerms = defaultIgnore;
+        fs.writeFileSync('configs/ignore.json',`{"ignoreList": []}`);
         console.log("No ignore file found, creating one");
-        return {"ignoreList": ignoreTerms};
+        return {"ignoreList": []};
     }
     
 }
@@ -202,7 +197,7 @@ files.forEach(function (file) {
                 });
             }
             fileColorToggle = !fileColorToggle;
-            if(documentReoprt.dialogue.length > 0) {
+            if(documentReport.dialogue.length > 0) {
                 reportData.files.push(documentReport);
                 if(pageResults) {
                     prompt('Press any key to continue');
