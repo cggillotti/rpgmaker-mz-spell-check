@@ -9,8 +9,7 @@ var showAll = false;
 var replace = false;
 var interactive = false;
 var reportData = {"files":[]};
-var ignores;
-var ignoreTerms = [];
+var ignores =  {"ignoreList": []};
 var flaggedTerms = {};
 var pageResults = false;
 var errorCount = 0;
@@ -31,6 +30,7 @@ if(commandArgs.length && commandArgs[0] != "") {
             console.log("node rpg_spellcheck.js -d [PATH TO DATA DIRECTORY] "+ colors.gray("// Runs spellcheck, looks in path passed as first argument"));
             console.log("node rpg_spellcheck.js -a"+ colors.gray("// Runs spellcheck, shows all lines not just flagged ones "));
             console.log("node rpg_spellcheck.js -p"+ colors.gray("// Runs spellcheck, waits for user input after each file "));
+            console.log("node rpg_spellcheck.js -i"+ colors.gray("// Runs spellcheck, allows user to go through most flagged terms and add to ignore file "));
             return;
         }
 
@@ -56,50 +56,54 @@ if(commandArgs.length && commandArgs[0] != "") {
     }
 }
 
-console.log(colors.green("Looking in "), fileDir)
-getIgnores();
-checkFiles();
+console.log(colors.green("Looking in "), fileDir);
+ignores = getIgnores();
+checkFiles(ignores);
 console.log("Total of "+errorCount+" words flagged");
 var flaggedTermsSorted = getFlaggedTermsArray(flaggedTerms);
 createReport(reportData, flaggedTermsSorted);
-addToIgnore(flaggedTermsSorted, ignoreTerms,ignores);
+if(interactive) {
+    addToIgnore(flaggedTermsSorted ,ignores);   
+}
+
 
 
 function getIgnores() {
-    if (fs.existsSync(path)) 
-    {
-        if(fs.existsSync('configs/ignore.json')) {
-            var ignoresRaw =  fs.readFileSync('configs/ignore.json');
-            ignores = JSON.parse(ignoresRaw);
-            ignoreTerms = ignores.ignoreList;
+    console.log("Getting Ignores...");
+    if(fs.existsSync('configs/ignore.json')) {
+        var ignoresRaw =  fs.readFileSync('configs/ignore.json');
+        ignoresJSON = JSON.parse(ignoresRaw);
+        console.log("Ignore file found");
+        return ignoresJSON;
 
-        } else {
-            var defaultIgnore = {
-                "ignoreList": [
-                ]
-            };
-            fs.writeFileSync('configs/ignore.json',JSON.stringify(defaultIgnore));
-            ignoreTerms = defaultIgnore;
-            ignores = {"ignoreList": ignoreTerms};
-        }
+    } else {
+        var defaultIgnore = {
+            "ignoreList": [
+            ]
+        };
+        fs.writeFileSync('configs/ignore.json',JSON.stringify(defaultIgnore));
+        ignoreTerms = defaultIgnore;
+        console.log("No ignore file found, creating one");
+        return {"ignoreList": ignoreTerms};
     }
+    
 }
 
-function addToIgnore(flaggedTermsSorted, ignoreTerms, ignores) {
+function addToIgnore(flaggedTermsSorted, ignoreTerms) {
     var modifyIgnore = false;   
-    var doIgnore = prompt('Would you like to see the most flagged words? We can add them to your ignore list. y/n? ');
+    var doIgnore = prompt('Would you like to see the repeated flagged words? We can add them to your ignore list. y/n? ');
 
     if(doIgnore.match(/[Yy]/)) {
         console.log("Here are the top most flagged terms.");
         for(var i = 0; i < flaggedTermsSorted.length; i++)
         {
-            if(flaggedTermsSorted[i][1] > 3)
+            if(flaggedTermsSorted[i][1] > 1)
             {
                console.log("The word "+  colors.red(flaggedTermsSorted[i][0])+" was flagged "+  colors.red(flaggedTermsSorted[i][1]+" times"));
                var update = prompt("Would you like to add this to the ignorefile? y/n? ");
                if(update && update.match(/[Yy]/)) {
                 modifyIgnore = true;
-                ignoreTerms.push(flaggedTermsSorted[i][0]);
+                ignoreTerms.ignoreList.push(flaggedTermsSorted[i][0]);
                 console.log(colors.blue("Added to ignore list, will be saved after exit")
                 );
                }
@@ -109,7 +113,7 @@ function addToIgnore(flaggedTermsSorted, ignoreTerms, ignores) {
     }
 
     if(modifyIgnore) {
-        fs.writeFileSync('configs/ignore.json',JSON.stringify({"ignoreList":ignoreTerms}),{'encoding':'utf-8'});
+        fs.writeFileSync('configs/ignore.json',JSON.stringify(ignoreTerms),{'encoding':'utf-8'});
         console.log(colors.green("Updated Ignore list."));
     }
 
@@ -140,7 +144,7 @@ function createReport(reportData, flaggedTermsSorted){
     fs.writeFileSync("configs/lastreport.json",JSON.stringify(reportData));
 }
 
-function checkFiles() {
+function checkFiles(ignoreTerms) {
 
 var files = fs.readdirSync(fileDir);
 files.forEach(function (file) {
@@ -171,12 +175,12 @@ files.forEach(function (file) {
                                             wrd =  wrd.replace(/\\\^/,''); //RMMZ Tags, FS, 
                                             wrd =  wrd.replace(/[^\w\s\d']/,''); //Non
                                             wrd =  wrd.replace(/\r/,'');
-                                            if(!checker.spellCheck(wrd) && wrd != "" && !ignoreTerms.includes(wrd)){
+                                            if(!checker.spellCheck(wrd.toLowerCase()) && wrd != "" && !ignoreTerms.ignoreList.includes(wrd)){
                                                 
                                                 hasError = true;
                                                 errorCount++;
                                                 msg += colors.red(wrd) + " ";
-                                                lineReportData.flagged.push(wrd);  
+                                                lineReportData.flagged.push(wrd.toLowerCase());  
                                                 addToFlags(flaggedTerms, wrd);
                                             } else if (wrd && wrd != " " && wrd != "Empty") {
                                                 msg += wrd + " ";
@@ -198,7 +202,7 @@ files.forEach(function (file) {
                 });
             }
             fileColorToggle = !fileColorToggle;
-            if(documentReport.dialogue.length > 0) {
+            if(documentReoprt.dialogue.length > 0) {
                 reportData.files.push(documentReport);
                 if(pageResults) {
                     prompt('Press any key to continue');
