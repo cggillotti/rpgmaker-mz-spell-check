@@ -13,6 +13,8 @@ var ignores =  {"ignoreList": []};
 var flaggedTerms = {};
 var pageResults = false;
 var errorCount = 0;
+var filterWord = ".json";
+var customMatch = false;
 
 const commandArgs = process.argv.slice(2);
 
@@ -31,15 +33,12 @@ if(commandArgs.length && commandArgs[0] != "") {
             console.log("node rpg_spellcheck.js -a"+ colors.gray("// Runs spellcheck, shows all lines not just flagged ones "));
             console.log("node rpg_spellcheck.js -p"+ colors.gray("// Runs spellcheck, waits for user input after each file "));
             console.log("node rpg_spellcheck.js -i"+ colors.gray("// Runs spellcheck, allows user to go through most flagged terms and add to ignore file "));
+            console.log("node rpg_spellcheck.js -f [word to match in file names]"+ colors.gray("// Runs spellcheck, only including files whose titles contain string. It comes before directory path"));
             return;
         }
 
         if(commandArgs[0].includes("a") ){
             showAll = true;
-        }
-
-        if(commandArgs[0].includes("d")) {
-            fileDir = commandArgs[1];
         }
 
         if(commandArgs[0].includes("r")) {
@@ -53,6 +52,21 @@ if(commandArgs.length && commandArgs[0] != "") {
           if(commandArgs[0].includes("p")) {
             pageResults = true;
           }
+
+          if(commandArgs[0].includes("f")) {
+            customMatch = true;
+            filterWord = commandArgs[1];
+          }
+
+          if(commandArgs[0].includes("d")) {
+              if(customMatch) {
+                fileDir = commandArgs[2];
+              } else {
+                fileDir = commandArgs[1];
+              }
+  
+        }
+
     }
 }
 
@@ -146,10 +160,9 @@ files.forEach(function (file) {
     var documentReport = {"file": file.toString(),"dialogue":[]};
     filepath = `${fileDir}/${file}`;
     let hasError = false;
-    if(file.includes(".json")) {
+    if(file.includes(filterWord)) {
         var documentRaw =  fs.readFileSync(filepath,{encoding:'utf8', flag:'r'});
         var documentData = JSON.parse(documentRaw);
-
             if(documentData.events != null)
             {
                 documentData.events.forEach(event => {
@@ -157,43 +170,67 @@ files.forEach(function (file) {
                         event.pages.forEach(page => {
                             if(page != null & page.list != null && page.list.length > 0) {
                                 page.list.forEach(pageItem => {
-                                    hasError = false;
                                     if(pageItem.code == 401){
-                                        var lineReportData = {"line":"","flagged":[]};
-                                        var cleanedLine = pageItem.parameters[0].replace(/(<([^>]+)>)/ig,' ');
-                                        lineReportData.line = cleanedLine;
-                                        var msg = "";
-                                        cleanedLine.split(' ').forEach( wrd => {
-                                            wrd =  wrd.replace(/(<([^>]+)>)/ig,' '); //Bracket Tags
-                                            wrd =  wrd.replace(/\\F[\w]\[\d+\]/,''); //RMMZ Tags, FS, 
-                                            wrd =  wrd.replace(/\\C\[\d+\]/,''); //RMMZ Tags, FS, 
-                                            wrd =  wrd.replace(/\\\^/,''); //RMMZ Tags, FS, 
-                                            wrd =  wrd.replace(/[^\w\s\d']/,''); //Non
-                                            wrd =  wrd.replace(/\r/,'');
-                                            if(!checker.spellCheck(wrd.toLowerCase()) && wrd != "" && !ignoreTerms.ignoreList.includes(wrd)){
+                                        pageItem.parameters.forEach(parameterValue => {
+                                           
+                                            if(isNaN(parameterValue))
+                                            {
                                                 
-                                                hasError = true;
-                                                errorCount++;
-                                                msg += colors.red(wrd) + " ";
-                                                lineReportData.flagged.push(wrd.toLowerCase());  
-                                                addToFlags(flaggedTerms, wrd);
-                                            } else if (wrd && wrd != " " && wrd != "Empty") {
-                                                msg += wrd + " ";
-                                            } 
-                                        });
-                                        if(hasError || showAll) {
-                                            if(fileColorToggle) {
-                                                console.log(colors.white(file.toString()) +" "+ msg);
-                                            } else {
-                                                console.log(colors.gray(file.toString()) +" "+ msg);
+                                                processLine(parameterValue,file, documentReport, ignoreTerms);
                                             }
-                                        }
-                                        documentReport.dialogue.push(lineReportData);
+                                        });
+                                  
                                     }
                                 });
                             }
                         });
                     }
+                });
+            } else if (documentData.length >0) {
+                documentData.forEach(obj => {
+
+                    if(obj && (obj.list || obj.pages)) {
+  
+                          
+                            if(obj && obj.list && obj.list.length > 0)
+                            {
+                                obj.list.forEach(listItem => {
+                                    if(listItem && listItem.code == 401)
+                                    {
+                                        listItem.parameters.forEach(parameterValue => {
+                                            if(isNaN(parameterValue))
+                                            {
+                                                processLine(parameterValue,file, documentReport,ignoreTerms);
+                                            }
+                                        });
+                                      
+                                    }
+                                    
+                                });
+
+                            } else if (obj && obj.pages && obj.pages.length > 0) {
+                                obj.pages.forEach(page => {
+                                        if(page && page.list && page.list.length > 0) {
+                                            page.list.forEach(listItem => {
+                                                if(listItem && listItem.code == 401) {
+                                                    listItem.parameters.forEach(parameterValue => {
+                                                       
+                                                        if(isNaN(parameterValue))
+                                                        {
+                                                            
+                                                            processLine(parameterValue, file, documentReport,ignoreTerms);
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                        }
+                                });
+                            } 
+
+
+                     
+                    }
+
                 });
             }
             fileColorToggle = !fileColorToggle;
@@ -206,3 +243,36 @@ files.forEach(function (file) {
         }
     });
 };
+
+function processLine(line,file,documentReport, ignoreTerms) {
+    var hasError = false;
+    var lineReportData = {"line":"","flagged":[]};
+    var cleanedLine = line.replace(/(<([^>]+)>)/ig,' ');
+    lineReportData.line = cleanedLine;
+    var msg = "";
+    cleanedLine.split(' ').forEach( wrd => {
+        wrd =  wrd.replace(/(<([^>]+)>)/ig,' '); //Bracket Tags
+        wrd =  wrd.replace(/\\F[\w]\[\d+\]/,''); //RMMZ Tags, FS, 
+        wrd =  wrd.replace(/\\C\[\d+\]/,''); //RMMZ Tags, FS, 
+        wrd =  wrd.replace(/\\\^/,''); //RMMZ Tags, FS, 
+        wrd =  wrd.replace(/[^\w\s\d']/,''); //Non
+        wrd =  wrd.replace(/\r/,'');
+        if(!checker.spellCheck(wrd.toLowerCase()) && wrd != "" && !ignoreTerms.ignoreList.includes(wrd)){  
+            hasError = true;
+            errorCount++;
+            msg += colors.red(wrd) + " ";
+            lineReportData.flagged.push(wrd.toLowerCase());  
+            addToFlags(flaggedTerms, wrd);
+        } else if (wrd && wrd != " " && wrd != "Empty") {
+            msg += wrd + " ";
+        } 
+    });
+    if(hasError || showAll) {
+        if(fileColorToggle) {
+            console.log(colors.white(file.toString()) +" "+ msg);
+        } else {
+            console.log(colors.gray(file.toString()) +" "+ msg);
+        }
+    }
+    documentReport.dialogue.push(lineReportData);
+}
