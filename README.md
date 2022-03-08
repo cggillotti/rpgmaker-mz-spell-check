@@ -16,8 +16,10 @@ To get started
 - - -a, Display all lines, not just ones with flagged words
 - - -i, Interactive add to ignore step
 - - -p, Page results by file
+- - -f, Filter files in directory by match (eg. Map will limit the scan to json files with "Map" in the name)
 
 Results are written to datafiles/lastreport.json
+Ignore is stored in /configs
 
 You can add words to ignore when flagged as misspelled to the ignore.json file. Add it as an entry in the ignorelist array.
 
@@ -44,6 +46,11 @@ This will prompt you after the scan is done to review any words that came up > 3
 
 <img width="505" alt="Ignore process" src="https://user-images.githubusercontent.com/7127233/156056366-a55ecb4d-f193-4af8-9d27-b9951235fc31.png">
 
+### Scan default /datasources but only the Actors.json
+- node rpgm_spellcheck.js -f Actor
+
+### Scan custom directory but only the Actors.json
+- node rpgm_spellcheck.js -fd Actor /path/to/datafiles
 
 ## Notes
 If you're on windows with an ubuntu subsystem you may need to navigate to your files with /mnt/[DISK LETTER]
