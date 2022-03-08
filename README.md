@@ -5,6 +5,8 @@ This is a node js command line tool to quick pull out all of the Talk strings fr
 It will write out the lines and run a spellchecker against the words found, and will highlight things that might be wrong.
 There is a file called ignore.json under /config so you can put in words to ignore for spellcheck (like names).
 
+## Requirements
+Built and tested with npm 8.3.1 and node 16.14, YMMV with other builds.
 
 ## Usage
 To get started
